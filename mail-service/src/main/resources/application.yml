@@ -1,0 +1,48 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: mail-service
+  
+  profiles:
+    active: docker
+  
+  datasource:
+    url: jdbc:mysql://mysql:3306/microservices_db
+    username: microuser
+    password: micropass
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  
+  kafka:
+    bootstrap-servers: kafka:29092
+    consumer:
+      group-id: mail-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.microservices.mail.dto"
+        spring.json.value.default.type: "com.microservices.mail.dto.MailRequest"
+        spring.json.use.type.headers: false
+  
+  # Mailtrap Production Send API Configuration
+  mailtrap:
+    api-token: ${MAILTRAP_API_TOKEN:your-api-token}
+    api-url: https://send.api.mailtrap.io/api/send
+    default-recipient: ${MAILTRAP_DEFAULT_RECIPIENT:hieppclone@gmail.com}
+
+logging:
+  level:
+    com.microservices.mail: DEBUG
+    org.springframework.kafka: INFO
+    org.springframework.mail: DEBUG 

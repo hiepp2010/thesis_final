@@ -1,0 +1,141 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: chat-service
+  
+  profiles:
+    active: default
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/microservices_db
+    username: microuser
+    password: micropass
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  
+  # Redis Configuration for Pub/Sub
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+    
+    # Elasticsearch Configuration
+    elasticsearch:
+      repositories:
+        enabled: true
+  
+  elasticsearch:
+    uris: http://localhost:9200
+    username: 
+    password: 
+    connection-timeout: 5s
+    socket-timeout: 30s
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: chat-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+# JWT Configuration
+jwt:
+  secret: mySecretKey123456789012345678901234567890
+  expiration: 86400000
+
+# Logging Configuration
+logging:
+  level:
+    com.microservices.chat: DEBUG
+    org.springframework.data.elasticsearch: DEBUG
+    redis.clients.jedis: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/chat-service.log
+
+# WebSocket Configuration
+websocket:
+  allowed-origins: "*"
+  endpoint: "/ws"
+  topic-prefix: "/topic"
+  app-prefix: "/app"
+
+# Redis Pub/Sub Configuration
+redis:
+  pubsub:
+    channel-prefix: "chat:"
+    message-channel: "chat:messages"
+    typing-channel: "chat:typing"
+    user-status-channel: "chat:user-status"
+
+# Elasticsearch Configuration
+elasticsearch:
+  index:
+    name: chat-messages
+    replicas: 1
+    shards: 1
+  search:
+    max-results: 100
+    highlight: true
+
+# Management and Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  
+  datasource:
+    url: jdbc:mysql://mysql:3306/microservices_db
+    username: microuser
+    password: micropass
+  
+  data:
+    redis:
+      host: redis
+      port: 6379
+    
+  elasticsearch:
+    uris: http://elasticsearch:9200
+  
+  kafka:
+    bootstrap-servers: kafka:29092 

@@ -1,0 +1,132 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        # Test route
+        - id: test-route
+          uri: https://httpbin.org/get
+          predicates:
+            - Path=/test/**
+          filters:
+            - StripPrefix=1
+        
+        # Auth service routes (public)
+        - id: auth-register
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/api/auth/register
+        
+        - id: auth-login
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/api/auth/login
+            
+        - id: auth-refresh
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/api/auth/refresh
+            
+        - id: auth-validate
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/api/auth/validate
+            
+        - id: auth-health
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/api/auth/health
+
+        # HRMS service routes (protected - require JWT)
+        - id: hrms-protected
+          uri: http://hrms-service:8082
+          predicates:
+            - Path=/api/hrms/**
+          filters:
+            - JwtAuthenticationFilter
+            
+        # HRMS health endpoint (public)
+        - id: hrms-health
+          uri: http://hrms-service:8082
+          predicates:
+            - Path=/hrms/health
+
+        # Ticket service public endpoints (HIGH PRIORITY - must come before protected routes)
+        - id: ticket-priorities
+          uri: http://ticket-service:8084
+          order: 1
+          predicates:
+            - Path=/api/tickets/priorities
+            
+        - id: ticket-statuses
+          uri: http://ticket-service:8084
+          order: 2
+          predicates:
+            - Path=/api/tickets/statuses
+
+        # Ticket relationship types (public endpoint) 
+        - id: ticket-relationship-types
+          uri: http://ticket-service:8084
+          order: 3
+          predicates:
+            - Path=/api/tickets/relationships/types
+
+        # Project service routes (protected - require JWT)
+        - id: project-protected
+          uri: http://ticket-service:8084
+          order: 100
+          predicates:
+            - Path=/api/projects/**
+          filters:
+            - JwtAuthenticationFilter
+
+        # Ticket relationships routes (protected - require JWT - more specific first)
+        - id: ticket-relationships
+          uri: http://ticket-service:8084
+          order: 101
+          predicates:
+            - Path=/api/tickets/relationships/**
+          filters:
+            - JwtAuthenticationFilter
+
+        # Ticket service routes (protected - require JWT - less specific last)
+        - id: ticket-protected
+          uri: http://ticket-service:8084
+          order: 102
+          predicates:
+            - Path=/api/tickets/**
+          filters:
+            - JwtAuthenticationFilter
+
+        # Project comments routes (protected - require JWT)
+        - id: project-comments
+          uri: http://ticket-service:8084
+          order: 103
+          predicates:
+            - Path=/api/projects/comments/**
+          filters:
+            - JwtAuthenticationFilter
+
+jwt:
+  secret: ${JWT_SECRET:mySecretKey123456789012345678901234567890}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.server: DEBUG
+    org.springframework.boot.web.reactive.context: DEBUG 

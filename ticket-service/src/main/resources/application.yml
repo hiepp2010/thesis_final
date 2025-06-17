@@ -1,0 +1,95 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: ticket-service
+  
+  profiles:
+    active: docker
+  
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+  
+  datasource:
+    url: jdbc:postgresql://postgres:5432/tickets_db
+    username: ticket_user
+    password: ticket_password
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  # Redis Configuration for Caching
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 15m
+      cache-null-values: false
+  
+  # Jackson configuration to handle Hibernate lazy loading
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+    properties:
+      hibernate:
+        force-lazy-loading: false
+    
+  kafka:
+    bootstrap-servers: kafka:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: ticket-service-group-v2
+      auto-offset-reset: latest
+      properties:
+        spring.json.trusted.packages: "*"
+
+jwt:
+  secret: mySecretKey123456789012345678901234567890
+
+# MinIO Configuration
+minio:
+  endpoint: http://minio:9000
+  access-key: minioadmin
+  secret-key: minioadmin123
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+  show-actuator: true
+
+logging:
+  level:
+    com.microservices.ticketservice: DEBUG
+    org.springframework.security: DEBUG 
